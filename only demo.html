@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Objective MCQ Paper (Embedded JSON)</title>
+<style>
+body{ font-family: Arial; background:#f4f6f8; padding:20px; }
+.container{ max-width:900px; background:#fff; padding:20px; border-radius:8px; margin:auto; }
+h2{text-align:center;}
+.timer{ font-size:18px; font-weight:bold; color:red; text-align:center; margin-bottom:15px; }
+.question{ margin-bottom:15px; }
+.options label{ display:block; padding:5px; cursor:pointer; }
+.correct{ background:#c8f7c5; }
+.wrong{ background:#f7c5c5; }
+button{ padding:10px 20px; font-size:16px; cursor:pointer; margin-top:10px; }
+input{ padding:6px; width:100%; margin-bottom:10px; }
+.score-box{ font-weight:bold; margin-top:15px; }
+</style>
+</head>
+<body onload="startPaper()">
+
+<div class="container">
+<h2>Objective MCQ Paper</h2>
+
+<div class="timer">⏱️ Time Left: <span id="time">2:00</span></div>
+
+<label>Student Name *</label>
+<input type="text" id="name">
+<label>Mobile Number (10 digit) *</label>
+<input type="text" id="mobile" maxlength="10">
+
+<hr>
+
+<form id="quizForm"></form>
+
+<button onclick="submitQuiz()">Submit</button>
+<div class="score-box" id="result"></div>
+
+</div>
+
+<script>
+// ===== JSON Embedded =====
+let paperData = {
+  "paperName":"Objective MCQ Demo",
+  "timeMinutes":1,
+  "questions":[
+    {
+    "q": "What is the default file extension of LibreOffice Writer? / LibreOffice Writer की डिफ़ॉल्ट फाइल एक्सटेंशन क्या है?",
+    "options": [
+      ".doc – (डॉक)",
+      ".txt – (टेक्स्ट)",
+      ".odt – (ओपन डोक्युमेंट टेक्स्ट)",
+      ".xls – (एक्सेल शीट)"
+    ],
+    "answer": 3
+  },
+    {"q":"HTML ka full form kya hai?","options":["Hyper Tool Markup Language","Hyper Text Markup Language","High Text Markup Language","None"],"answer":2},
+    {"q":"Internet ka father kaun hai?","options":["Tim Berners-Lee","Charles Babbage","Vint Cerf","Dennis Ritchie"],"answer":3},
+    {"q":"CSS ka use kis ke liye hota hai?","options":["Structure","Styling","Database","Logic"],"answer":2},
+    {"q":"1 Byte = ?","options":["4 bits","8 bits","16 bits","32 bits"],"answer":2}
+  ]
+};
+
+let questions = paperData.questions;
+let paperName = paperData.paperName;
+let time = paperData.timeMinutes * 60;
+let timerInterval;
+
+// ===== Render Questions =====
+function startPaper(){
+    renderQuestions();
+    startTimer();
+}
+
+function renderQuestions(){
+    let form = document.getElementById("quizForm");
+    form.innerHTML = "";
+    questions.forEach((q,i)=>{
+        let div = document.createElement("div");
+        div.classList.add("question");
+        div.innerHTML = "<b>Q"+(i+1)+". "+q.q+"</b>";
+        let optDiv = document.createElement("div");
+        optDiv.classList.add("options");
+        q.options.forEach((o,j)=>{
+            let label = document.createElement("label");
+            label.innerHTML = `<input type="radio" name="q${i}" value="${j+1}"> ${o}`;
+            optDiv.appendChild(label);
+        });
+        div.appendChild(optDiv);
+        form.appendChild(div);
+    });
+}
+
+// ===== Timer =====
+function startTimer(){
+    timerInterval = setInterval(()=>{
+        let m = Math.floor(time/60);
+        let s = time%60;
+        document.getElementById("time").innerText = m + ":" + (s<10?"0"+s:s);
+        if(time<=0){
+            clearInterval(timerInterval);
+            alert("Time Over! Paper auto submit ho gaya.");
+            submitQuiz();
+        }
+        time--;
+    },1000);
+}
+
+// ===== Submit =====
+function submitQuiz(){
+    clearInterval(timerInterval);
+    let name = document.getElementById("name").value.trim();
+    let mobile = document.getElementById("mobile").value.trim();
+
+    if(name=="" || mobile==""){ alert("Name aur Mobile compulsory"); return; }
+    if(!/^[0-9]{10}$/.test(mobile)){ alert("Mobile 10 digit ka hona chahiye"); return; }
+
+    let score=0;
+    questions.forEach((q,i)=>{
+        let radios = document.getElementsByName("q"+i);
+        radios.forEach(r=>{
+            r.parentElement.classList.remove("correct","wrong");
+            if(r.checked){
+                if(parseInt(r.value)===q.answer){ score++; r.parentElement.classList.add("correct"); }
+                else{ r.parentElement.classList.add("wrong"); }
+            }
+            if(parseInt(r.value)===q.answer){ r.parentElement.classList.add("correct"); }
+        });
+    });
+
+    document.getElementById("result").innerText = "Obtained Marks: "+score+" / "+questions.length;
+
+    // Excel CSV
+    let csv="Name,Mobile,Paper,Obtained Marks,Total Marks\n";
+    csv += name+","+mobile+","+paperName+","+score+","+questions.length;
+    let blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = name+"_Result.csv";
+    link.click();
+}
+</script>
+
+</body>
+</html>
+s
